@@ -4,12 +4,13 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitea98d92442241ca154ddf64cbaa8c0aa
+class ComposerStaticInit556e61becefe0c8fa791cf9370db5daf
 {
     public static $classMap = array (
         'BPML_Compatibility' => __DIR__ . '/../..' . '/includes/class-bpml-compatibility.php',
         'BPML_Filters' => __DIR__ . '/../..' . '/includes/class.filters.php',
         'BPML_XProfile' => __DIR__ . '/../..' . '/includes/class.xprofile.php',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'WPML\\BuddyPress\\Groups' => __DIR__ . '/../..' . '/includes/class.groups.php',
         'WPML\\BuddyPress\\Upgrade' => __DIR__ . '/../..' . '/includes/class.upgrade.php',
         'WPML_Core_Version_Check' => __DIR__ . '/..' . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-core-version-check.php',
@@ -20,7 +21,7 @@ class ComposerStaticInitea98d92442241ca154ddf64cbaa8c0aa
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInitea98d92442241ca154ddf64cbaa8c0aa::$classMap;
+            $loader->classMap = ComposerStaticInit556e61becefe0c8fa791cf9370db5daf::$classMap;
 
         }, null, ClassLoader::class);
     }

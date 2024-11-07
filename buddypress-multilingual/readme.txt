@@ -1,10 +1,10 @@
-=== Plugin Name ===
+=== BuddyPress Multilingual ===
 Contributors: AmirHelzer, dgwatkins, strategio, jozik
 Donate link: http://wpml.org/documentation/related-projects/buddypress-multilingual/
-Tags: i18n, translation, localization, language, multilingual, WPML, BuddyPress
+Tags: i18n, multilingual, WPML, BuddyPress, BuddyBoss
 Requires at least: 4.7
-Tested up to: 6.5
-Stable tag: 1.7.0
+Tested up to: 6.7
+Stable tag: 1.7.1
 Requires PHP: 5.6
 License: GPLv2
 
@@ -56,6 +56,9 @@ Support for language as parameter will not be added soon as we're looking for so
 4. Profile
 
 == Changelog ==
+
+= 1.7.1 =
+* Bump tested WordPress version
 
 = 1.7.0 =
 * Add support for the BuddyBoss platform.

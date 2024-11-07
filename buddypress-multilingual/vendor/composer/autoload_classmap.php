@@ -9,6 +9,7 @@ return array(
     'BPML_Compatibility' => $baseDir . '/includes/class-bpml-compatibility.php',
     'BPML_Filters' => $baseDir . '/includes/class.filters.php',
     'BPML_XProfile' => $baseDir . '/includes/class.xprofile.php',
+    'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'WPML\\BuddyPress\\Groups' => $baseDir . '/includes/class.groups.php',
     'WPML\\BuddyPress\\Upgrade' => $baseDir . '/includes/class.upgrade.php',
     'WPML_Core_Version_Check' => $vendorDir . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-core-version-check.php',

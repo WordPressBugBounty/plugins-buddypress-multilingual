@@ -1,14 +1,16 @@
 <?php
-/*
-  Plugin Name: BuddyPress Multilingual
-  Plugin URI: http://wpml.org/?page_id=2890
-  Description: BuddyPress Multilingual. <a href="http://wpml.org/?page_id=2890">Documentation</a>.
-  Author: OnTheGoSystems
-  Author URI: http://www.onthegosystems.com
-  Version: 1.7.0
+/**
+ * Plugin Name: BuddyPress Multilingual
+ * Plugin URI: http://wpml.org/?page_id=2890
+ * Description: BuddyPress Multilingual. <a href="http://wpml.org/?page_id=2890">Documentation</a>.
+ * Author: OnTheGoSystems
+ * Author URI: http://www.onthegosystems.com
+ * Version: 1.7.1
+ *
+ * @package bpml
  */
 
-define( 'BPML_VERSION', '1.7.0' );
+define( 'BPML_VERSION', '1.7.1' );
 define( 'BPML_RELPATH', plugins_url( '', __FILE__ ) );
 define( 'BPML_PATH', __DIR__ );
 
@@ -32,7 +34,9 @@ function bpml_init() {
 		if ( bpml_is_langauge_as_param() ) {
 			add_action( 'admin_notices', 'bpml_admin_notice_wpml_settings' );
 		} else {
+			// phpcs:disable WordPress.Security.NonceVerification
 			$apply_filters = false;
+
 			/*
 			 * Check if frontend BP AJAX request
 			 * BPML attaches ?lang=[code]&bpml_filter=true to admin ajax url using:
@@ -41,36 +45,34 @@ function bpml_init() {
 			if ( defined( 'DOING_AJAX' ) && DOING_AJAX && isset( $_GET['bpml_filter'] ) ) {
 				$apply_filters = true;
 			}
+
 			/*
 			 * Heartbeat WP API - BP latest activity AJAX status update
 			 * Displayed on activity page, AJAX updated list of activities.
 			 * Hooks 'heartbeat_received' and 'heartbeat_nopriv_received'
 			 * cannot be used because filters need to be applied earlier.
 			 */
-			if ( isset($_POST['action']) && $_POST['action'] == 'heartbeat'
-					&& isset( $_POST['screen_id'] ) && $_POST['screen_id'] == 'front'
-					&& !empty( $_POST['data']['bp_activity_last_recorded'] ) ) {
+			if ( isset( $_POST['action'] ) && 'heartbeat' === $_POST['action']
+				&& isset( $_POST['screen_id'] ) && 'front' === $_POST['screen_id']
+				&& ! empty( $_POST['data']['bp_activity_last_recorded'] ) ) {
 				$apply_filters = true;
 			}
-			// Allow filtering on AJAX actions
-			if ( defined( 'DOING_AJAX' ) && isset( $_POST['action'] )
-				 && in_array( $_POST['action'],
-					array(
-						'bp_cover_image_upload',// Allow uploading cover images from screens in other languages
-						'post_update',// Allow post update
-					)
-				 )
+
+			if ( defined( 'DOING_AJAX' )
+				&& isset( $_POST['action'] )
+				&& in_array( $_POST['action'], [ 'bp_cover_image_upload', 'post_update' ], true )
 			) {
 				$apply_filters = true;
 			}
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 			$classes = [ WPML\BuddyPress\Upgrade::class ];
 
-			// Always on frontend
+			// Always on frontend.
 			if ( ! is_admin() || $apply_filters ) {
 				$classes[] = BPML_Filters::class;
 
-				// Verbose page rewrite rules
+				// Verbose page rewrite rules.
 				if ( defined( 'BPML_USE_VERBOSE_PAGE_RULES' ) && BPML_USE_VERBOSE_PAGE_RULES ) {
 					add_action( 'init', 'bpml_use_verbose_rules' );
 					add_filter( 'page_rewrite_rules', 'bpml_page_rewrite_rules_filter' );
@@ -85,7 +87,7 @@ function bpml_init() {
 			$loader = new WPML_Action_Filter_Loader();
 			$loader->load( $classes );
 		}
-	} else if ( is_admin() ) {
+	} elseif ( is_admin() ) {
 		add_action( 'admin_notices', 'bpml_admin_notice_required_plugins' );
 	}
 }

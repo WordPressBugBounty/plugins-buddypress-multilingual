@@ -34,7 +34,7 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 	}
 
 	/**
-	 * @param BP_Groups_Group|array $group
+	 * @param \BP_Groups_Group|array $group
 	 */
 	public function registerStrings( $group ) {
 		$get = Obj::prop( Fns::__, $group );

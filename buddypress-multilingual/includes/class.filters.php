@@ -30,6 +30,27 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 			},
 			999
 		);
+
+		// Add hooks related to the forum feature
+		$this->add_forum_hooks();
+
+	}
+
+	public function add_forum_hooks() {
+		if ( apply_filters( 'wpml_is_translated_post_type', null, 'forum' ) ) {
+			add_filter( 'bbp_get_forum_id', [ $this, 'convert_post_id' ], 10, 2 );
+			add_filter( 'bbp_get_topic_forum_id', [ $this, 'convert_post_id' ], 10, 2 );
+			add_filter( 'bbp_get_reply_forum_id', [ $this, 'convert_post_id' ], 10, 2 );
+		}
+		if ( apply_filters( 'wpml_is_translated_post_type', null, 'topic' ) ) {
+			add_filter( 'bbp_get_topic_id', [ $this, 'convert_post_id' ], 10, 2 );
+			add_filter( 'bbp_get_reply_topic_id', [ $this, 'convert_post_id' ], 10, 2 );
+		}
+		if ( apply_filters( 'wpml_is_translated_post_type', null, 'reply' ) ) {
+			add_filter( 'bbp_get_reply_to', [ $this, 'convert_post_id' ], 10, 2 );
+			add_filter( 'bbp_get_reply_id', [ $this, 'convert_post_id' ], 10, 2 );
+			add_filter( 'bbp_get_reply_to_id', [ $this, 'convert_post_id' ], 10, 2 );
+		}
 	}
 
 	/**
@@ -111,12 +132,12 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 			if ( ! empty( $page->ID ) ) {
 				/*
-				 * If languages are empty (WPML failed in setting language switcher data)
-				 * re-create language switcher data.
-				 *
-				 * Only case so far known is when WP_Query queried_object is messed up by BP.
-				 * BP sets queried object to be BP content type, but it's fake WP_Post without ID.
-				 */
+				* If languages are empty (WPML failed in setting language switcher data)
+				* re-create language switcher data.
+				*
+				* Only case so far known is when WP_Query queried_object is messed up by BP.
+				* BP sets queried object to be BP content type, but it's fake WP_Post without ID.
+				*/
 				// @todo Add persistent message for admin to report and mark as deprecated
 				if ( empty( $languages )
 						&& method_exists( $sitepress, 'set_wp_query' )
@@ -128,22 +149,22 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 					$wp_query->queried_object_id = $page->ID;
 					$wp_query->queried_object    = $page;
 					$sitepress->set_wp_query();
-					remove_filter( 'icl_ls_languages', [ $this, 'icl_ls_languages_filter' ] );
+					remove_filter( 'icl_ls_languages', [ $this, 'icl_ls_languages_filter' ], 99 );
 					// Re-create language switcher data.
 					$languages = $sitepress->get_ls_languages();
-					add_filter( 'icl_ls_languages', [ $this, 'icl_ls_languages_filter' ] );
+					add_filter( 'icl_ls_languages', [ $this, 'icl_ls_languages_filter' ], 99 );
 					// Restore $wp_query.
 					unset( $wp_query );
-					$wp_query = clone $_wp_query; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+					$wp_query = clone $_wp_query; // phpcs:ignore WordPress.Variables.GlobalVariables.OverrideProhibited
 					unset( $_wp_query );
 					$sitepress->set_wp_query();
 				}
 
 				/*
-				 * Append all URI components after base component.
-				 * For example member screen:
-				 * {http://localhost/es/miembros}/{keir/profile/view/}
-				 */
+				* Append all URI components after base component.
+				* For example member screen:
+				* {http://localhost/es/miembros}/{keir/profile/view/}
+				*/
 				if ( is_array( $languages ) && get_option( 'permalink_structure' ) !== '' ) {
 					$unfiltered_uri   = $bp->unfiltered_uri;
 					$offset           = intval( $bp->unfiltered_uri_offset ) + 1;
@@ -211,6 +232,15 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 			$page_id = apply_filters( 'wpml_object_id', $page_id, 'page', true );
 		}
 		return $page_ids;
+	}
+
+	/**
+	 * @param int $post_id Post ID
+	 *
+	 * @return int Converted post ID
+	 */
+	public function convert_post_id( $post_id ) {
+		return apply_filters( 'wpml_object_id', $post_id, get_post_type( $post_id ), true );
 	}
 
 	/**

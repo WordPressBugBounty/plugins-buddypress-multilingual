@@ -4,14 +4,18 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit556e61becefe0c8fa791cf9370db5daf
+class ComposerStaticInitd7a1d45fb044abf2523702593b1b4470
 {
     public static $classMap = array (
         'BPML_Compatibility' => __DIR__ . '/../..' . '/includes/class-bpml-compatibility.php',
         'BPML_Filters' => __DIR__ . '/../..' . '/includes/class.filters.php',
         'BPML_XProfile' => __DIR__ . '/../..' . '/includes/class.xprofile.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'WPML\\BuddyPress\\Activities' => __DIR__ . '/../..' . '/includes/class.activities.php',
+        'WPML\\BuddyPress\\GroupTypes' => __DIR__ . '/../..' . '/includes/class.groupTypes.php',
         'WPML\\BuddyPress\\Groups' => __DIR__ . '/../..' . '/includes/class.groups.php',
+        'WPML\\BuddyPress\\Members' => __DIR__ . '/../..' . '/includes/class.members.php',
+        'WPML\\BuddyPress\\ProfileTypes' => __DIR__ . '/../..' . '/includes/class.profileTypes.php',
         'WPML\\BuddyPress\\Upgrade' => __DIR__ . '/../..' . '/includes/class.upgrade.php',
         'WPML_Core_Version_Check' => __DIR__ . '/..' . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-core-version-check.php',
         'WPML_Dependencies' => __DIR__ . '/..' . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-dependencies.php',
@@ -21,7 +25,7 @@ class ComposerStaticInit556e61becefe0c8fa791cf9370db5daf
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInit556e61becefe0c8fa791cf9370db5daf::$classMap;
+            $loader->classMap = ComposerStaticInitd7a1d45fb044abf2523702593b1b4470::$classMap;
 
         }, null, ClassLoader::class);
     }

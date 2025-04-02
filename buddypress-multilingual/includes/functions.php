@@ -1,4 +1,12 @@
 <?php
+
+/**
+ * @return bool
+ */
+function bpml_is_buddyboss() {
+	return defined( 'BP_PLATFORM_VERSION' );
+}
+
 /**
  * Turns on verbose rewrite rules.
  *
@@ -55,9 +63,14 @@ function bpml_is_langauge_as_param() {
 }
 
 function bpml_admin_notice_required_plugins() {
-	echo '<div class="message updated"><p>'
-	. esc_html__( 'For BuddyPress Multilingual to work you must enable WPML together with BuddyPress or BuddyBoss.', 'bpml' )
-	. '</p></div>';
+	$link_url = 'https://wpml.org/faq/how-to-add-string-translation-to-your-site/?utm_source=plugin&utm_medium=gui&utm_campaign=bpml';
+	$message  = sprintf(
+		/* translators: The placeholders are replaced by an HTML link pointing to the String translation add-on FAQ article. */
+		esc_html__( 'To use BuddyPress Multilingual, enable the WPML Multilingual CMS plugin and %1$sString Translation add-on%2$s alongside BuddyPress or BuddyBoss.', 'bpml' ),
+		'<a href="' . esc_url( $link_url ) . '" class="wpml-external-link" target="_blank">',
+		'</a>'
+	);
+	echo '<div class="notice notice-warning"><p>' . $message . '</p></div>';
 }
 
 function bpml_admin_notice_wpml_settings() {

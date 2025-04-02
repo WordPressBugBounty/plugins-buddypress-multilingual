@@ -5,12 +5,12 @@
  * Description: BuddyPress Multilingual. <a href="http://wpml.org/?page_id=2890">Documentation</a>.
  * Author: OnTheGoSystems
  * Author URI: http://www.onthegosystems.com
- * Version: 1.7.1
+ * Version: 1.8.1
  *
  * @package bpml
  */
 
-define( 'BPML_VERSION', '1.7.1' );
+define( 'BPML_VERSION', '1.8.1' );
 define( 'BPML_RELPATH', plugins_url( '', __FILE__ ) );
 define( 'BPML_PATH', __DIR__ );
 
@@ -30,7 +30,7 @@ require_once BPML_PATH . '/vendor/autoload.php';
 add_action( 'plugins_loaded', 'bpml_init', 11 );
 
 function bpml_init() {
-	if ( ( defined( 'BP_VERSION' ) || defined( 'BP_PLATFORM_VERSION' ) ) && did_action( 'wpml_loaded' ) ) {
+	if ( ( defined( 'BP_VERSION' ) || defined( 'BP_PLATFORM_VERSION' ) ) && did_action( 'wpml_loaded' ) && did_action( 'wpml_st_loaded' ) ) {
 		if ( bpml_is_langauge_as_param() ) {
 			add_action( 'admin_notices', 'bpml_admin_notice_wpml_settings' );
 		} else {
@@ -83,6 +83,10 @@ function bpml_init() {
 			$classes[] = BPML_XProfile::class;
 			$classes[] = BPML_Compatibility::class;
 			$classes[] = WPML\BuddyPress\Groups::class;
+			$classes[] = WPML\BuddyPress\Members::class;
+			$classes[] = WPML\BuddyPress\GroupTypes::class;
+			$classes[] = WPML\BuddyPress\Activities::class;
+			$classes[] = WPML\BuddyPress\ProfileTypes::class;
 
 			$loader = new WPML_Action_Filter_Loader();
 			$loader->load( $classes );

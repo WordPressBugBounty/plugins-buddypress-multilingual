@@ -20,7 +20,26 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 	private $group_string_prefix = 'profile group ';
 
 	const PRIORITY_BEFORE_NAME_REPLACE = 9;
-	const FIELD_TYPES_WITH_OPTIONS     = [ 'radio', 'checkbox', 'selectbox', 'multiselectbox' ];
+	const FIELD_TYPES_WITH_OPTIONS     = [ 'radio', 'checkbox', 'selectbox', 'multiselectbox', 'gender' ];
+	const FIELD_TYPE_WP_BIOGRAPHY      = 'wp-biography';
+	const FIELD_TYPE_WP_TEXTBOX        = 'wp-textbox';
+	const FIELD_TYPES_TEXT             = [ 'textarea', 'telephone', 'number', 'textbox', 'url' ];
+	const SEARCH_FORM_STRING_PREFIX    = 'profile search form ';
+
+	const USER_FIELDS_CONTEXT = 'Authors';
+
+	const MEMBER_FIELD_VALUE_NAME_FORMAT = 'member %s profile field %s value';
+
+	const XPROFILE_ANYNAME_FIELD_FUNCTIONS = [
+		// Those functions only exists in BuddyBoss.
+		// Note that BuddyBoss forces a value to replace the display_name field,
+		// so it should be evaluated last as multiple functions can match the field ID.
+		'first_name'   => 'bp_xprofile_firstname_field_id',
+		'last_name'    => 'bp_xprofile_lastname_field_id',
+		'nickname'     => 'bp_xprofile_nickname_field_id',
+		// This function exists in BuddyPress and BuddyBoss.
+		'display_name' => 'bp_xprofile_fullname_field_id',
+	];
 
 	public function add_hooks() {
 
@@ -37,6 +56,8 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		add_action( 'update_xprofile_field_meta', [ $this, 'update_alternate_name' ], 10, 4 );
 		add_action( 'add_xprofile_field_meta', [ $this, 'add_alternate_name' ], 10, 3 );
 		add_action( 'delete_xprofile_field_meta', [ $this, 'delete_alternate_name' ], 10, 3 );
+		add_action( 'updated_post_meta', [ $this, 'register_advanced_profile_search_strings' ], 10, 4 );
+		add_action( 'xprofile_data_after_save', [ $this, 'register_user_profile_data' ] );
 
 		// Translation filters.
 		add_filter( 'bp_get_the_profile_field_name', [ $this, 'translate_name' ], self::PRIORITY_BEFORE_NAME_REPLACE );
@@ -47,9 +68,12 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		add_filter( 'bp_get_the_profile_field_options_radio', [ $this, 'translate_radio' ], 0, 5 );
 		add_filter( 'bp_get_the_profile_field_options_multiselect', [ $this, 'translate_multiselect_option' ], 0, 5 );
 		add_filter( 'bp_get_the_profile_field_options_select', [ $this, 'translate_select_option' ], 0, 5 );
+		add_filter( 'bp_get_the_profile_field_options_select_gender', [ $this, 'translate_select_option' ], 0, 5 );
 		add_filter( 'bp_get_the_profile_field_value', [ $this, 'translate_value_profile_view' ], 9, 2 );
 		add_filter( 'bp_get_the_profile_group_name', [ $this, 'translate_group_name' ] );
 		add_filter( 'bp_get_member_profile_data', [ $this, 'translate_data' ], 10, 2 );
+		add_action( 'bp_ps_before_search_form', [ $this, 'translate_advanced_profile_search_strings' ] );
+
 	}
 
 	public function bp_init() {
@@ -381,8 +405,6 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 	}
 
 	/**
-	 * Filters field values on profile view template.
-	 *
 	 * @param string $value
 	 * @param string $field_type
 	 *
@@ -439,7 +461,83 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 			}
 		}
 
+		if ( self::FIELD_TYPE_WP_BIOGRAPHY === $field_type ) {
+			// This is the description user field, already translated under the 'Authors' domain.
+			$user_id = bp_current_user_id();
+			if ( $this->can_translate_wordpress_fields( $user_id ) ) {
+				$value = apply_filters( 'wpml_translate_single_string', $value, self::USER_FIELDS_CONTEXT, 'description_' . $user_id );
+			}
+		}
+		
+		if ( self::FIELD_TYPE_WP_TEXTBOX === $field_type ) {
+			// This is the first_name or the last_name user field from BuddyPress, already translated under the 'Authors' domain.
+			$user_id = bp_current_user_id();
+			if ( $this->can_translate_wordpress_fields( $user_id ) && is_callable( [ 'BP_XProfile_Field_Type_WordPress_Textbox', 'get_field_settings' ] ) ) {
+				$wp_user_key = \BP_XProfile_Field_Type_WordPress_Textbox::get_field_settings( $field->id );
+				$value       = apply_filters( 'wpml_translate_single_string', $value, self::USER_FIELDS_CONTEXT, $wp_user_key . '_' . $user_id );
+			}
+		}
+
+		$anyname_field_name = $this->get_xprofile_anyname_field_name( $field->id );
+		if ( null !== $anyname_field_name ) {
+			// This is the display_name field from BuddyPress, or the first, last, or nickname field from BuddyBoss, already translated under the 'Authors' domain.
+			$user_id = bp_current_user_id();
+			if ( $this->can_translate_wordpress_fields( $user_id ) ) {
+				$value = apply_filters( 'wpml_translate_single_string', $value, self::USER_FIELDS_CONTEXT, $anyname_field_name . '_' . $user_id );
+			}
+		} else if ( in_array( $field_type, self::FIELD_TYPES_TEXT, true ) ) {
+			$user_id = bp_current_user_id();
+			$value = $this->translate( $value, sprintf( self::MEMBER_FIELD_VALUE_NAME_FORMAT, $user_id, $field->id ) );
+		}
+
 		return $value;
+	}
+
+	/**
+	 * @param int $field_id
+	 *
+	 * @return bool
+	 */
+	private function is_xprofile_anyname_field_id( $field_id ) {
+		foreach ( self::XPROFILE_ANYNAME_FIELD_FUNCTIONS as $anyname_function ) {
+			if ( function_exists( $anyname_function ) && $field_id === $anyname_function() ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param int $field_id
+	 *
+	 * @return string|null
+	 */
+	private function get_xprofile_anyname_field_name( $field_id ) {
+		foreach ( self::XPROFILE_ANYNAME_FIELD_FUNCTIONS as $anyname_field_name => $anyname_function ) {
+			if ( function_exists( $anyname_function ) && $field_id === $anyname_function() ) {
+				return $anyname_field_name;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param int $user_id
+	 *
+	 * @return bool
+	 */
+	private function can_translate_wordpress_fields( $user_id ) {
+		$translated_roles = apply_filters( 'wpml_sub_setting', [], 'st', 'translated-users', null );
+		if ( empty( $translated_roles ) ) {
+			return false;
+		}
+		$user = new \WP_User( $user_id );
+		if ( is_array( $user->roles ) && array_intersect( $user->roles, $translated_roles ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -485,6 +583,9 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $data;
 	}
 
+	/**
+	 * @return bool
+	 */
 	protected function verify_nonce() {
 		if ( ! wp_verify_nonce( $_POST['nonce'], 'bpml-xprofile' ) ) {
 			die( '0' );
@@ -492,6 +593,9 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return true;
 	}
 
+	/**
+	 * @return bool
+	 */
 	protected function is_scan_needed() {
 		if ( function_exists( 'icl_st_is_registered_string' ) ) {
 			$groups = bp_xprofile_get_groups( [ 'fetch_fields' => true ] );
@@ -522,12 +626,12 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 	public function scan_needed_warning() {
 		echo '<div class="updated error"><p>'
-			. esc_html__( 'Buddypress Multilingual: some profile fields are not registered for translation', 'bpml' )
-			. '&nbsp;<a class="button edit js-bpml-register-fields" href="javascript:void(0)" data-bpml="nonce='
-			. esc_html( wp_create_nonce( 'bpml-xprofile' ) )
-			. '&action=bpml_register_fields">'
-			. esc_html__( 'Register fields', 'bpml' ) . '</a>'
-			. '</p></div>';
+		. esc_html__( 'Buddypress Multilingual: some profile fields are not registered for translation', 'bpml' )
+		. '&nbsp;<a class="button edit js-bpml-register-fields" href="javascript:void(0)" data-bpml="nonce='
+		. esc_html( wp_create_nonce( 'bpml-xprofile' ) )
+		. '&action=bpml_register_fields">'
+		. esc_html__( 'Register fields', 'bpml' ) . '</a>'
+		. '</p></div>';
 	}
 
 	public function ajax_register() {
@@ -537,6 +641,182 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 			$response = __( 'Fields registered', 'bpml' );
 		}
 		die( esc_html( $response ) );
+	}
+
+	/**
+	 * @param object $form The form object containing fields to translate.
+	 */
+	public function translate_advanced_profile_search_strings( $form ) {
+
+		if ( isset( $form->id ) && isset( $form->title ) ) {
+			$form->title = $this->translate(
+				$form->title,
+				self::SEARCH_FORM_STRING_PREFIX . $form->id . ' title'
+			);
+		}
+
+		if ( isset( $form->fields ) && is_array( $form->fields ) ) {
+			foreach ( $form->fields as $field ) {
+				$this->translate_advanced_profile_search_field( $field );
+			}
+		}
+	}
+
+	/**
+	 * @param object $field The field object containing label and options to translate.
+	 *
+	 * @return object The modified field object with translated strings.
+	 */
+	public function translate_advanced_profile_search_field( $field ) {
+
+		if ( isset( $field->id ) && ! empty( $field->id ) ) {
+
+			if ( isset( $field->label ) ) {
+				$original_label = $field->label;
+
+				$field->label = $this->translate(
+					$field->label,
+					self::SEARCH_FORM_STRING_PREFIX . $field->id . ' label'
+				);
+
+				if ( $field->label === $original_label ) {
+					$field->label = $this->translate(
+						$field->label,
+						$this->field_string_prefix . $field->id . ' name'
+					);
+				}
+			}
+
+			if ( isset( $field->description ) ) {
+				$field->description = $this->translate(
+					$field->description,
+					self::SEARCH_FORM_STRING_PREFIX . $field->id . ' description'
+				);
+			}
+		}
+
+		if ( isset( $field->options ) && is_array( $field->options ) && ! empty( $field->options ) ) {
+			$field->options = $this->translate_advanced_profile_search_field_options( $field );
+		}
+
+		return $field;
+	}
+
+	/**
+	 * @param object $field The field object containing options to translate.
+	 *
+	 * @return array
+	 */
+	private function translate_advanced_profile_search_field_options( $field ) {
+		$translated_options = [];
+
+		foreach ( $field->options as $option ) {
+			if ( is_string( $option ) ) {
+				// If there is a empty option, we should keep it.
+				$translated_options[ $option ] = ! empty( $option )
+				? $this->translate_option_name( (object) [ 'name' => $option ], $field->id )
+				: $option;
+			}
+		}
+
+		return $translated_options;
+	}
+
+	/**
+	 * @param int    $meta_id    ID of updated metadata entry.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Metadata key.
+	 * @param mixed  $meta_value Metadata value.
+	 */
+	public function register_advanced_profile_search_strings( $meta_id, $post_id, $meta_key, $meta_value ) {
+		if ( $meta_key !== 'bp_ps_options' || get_post_type( $post_id ) !== 'bp_ps_form' ) {
+			return;
+		}
+
+		if ( ! is_array( $meta_value ) || ! isset( $meta_value['field_code'] ) ) {
+			return;
+		}
+
+		$post_title = get_the_title( $post_id );
+		if ( ! empty( $post_title ) ) {
+			do_action(
+				'wpml_register_single_string',
+				$this->context,
+				self::SEARCH_FORM_STRING_PREFIX . $post_id . ' title',
+				$post_title
+			);
+		}
+
+		if ( isset( $meta_value['field_desc'] ) ) {
+			foreach ( $meta_value['field_code'] as $index => $field_code ) {
+				if ( ! empty( $meta_value['field_desc'][ $index ] ) ) {
+					$field_id = str_replace( 'field_', '', $field_code );
+					do_action(
+						'wpml_register_single_string',
+						$this->context,
+						self::SEARCH_FORM_STRING_PREFIX . $field_id . ' description',
+						$meta_value['field_desc'][ $index ]
+					);
+				}
+			}
+		}
+
+		if ( isset( $meta_value['field_label'] ) ) {
+			foreach ( $meta_value['field_code'] as $index => $field_code ) {
+				if ( ! empty( $meta_value['field_label'][ $index ] ) ) {
+					$field_id = str_replace( 'field_', '', $field_code );
+					do_action(
+						'wpml_register_single_string',
+						$this->context,
+						self::SEARCH_FORM_STRING_PREFIX . $field_id . ' label',
+						$meta_value['field_label'][ $index ]
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check whether the field data being saved should register the value for translation
+	 *
+	 * We skip this registration if:
+	 * - Somehow, the field does not exist.
+	 * - The field type matches FIELD_TYPE_WP_BIOGRAPHY or FIELD_TYPE_WP_TEXTBOX from NuddyPress, since WPML manages them already in their own domain.
+	 * - The field ID matches the any nartive field from is_xprofile_anyname_field_id(), since WPML also manages them already.
+	 * - The field type is not covered by the whitelist of fields that we can translate, as stated by FIELD_TYPES_TEXT.
+	 *
+	 * @param \BP_XProfile_ProfileData $data
+	 *
+	 * @return bool
+	 */
+	private function can_register_user_profile_data( $data ) {
+		$bp_field = xprofile_get_field( $data->field_id );
+		if ( null === $bp_field ) {
+			return false;
+		}
+		if ( ! in_array( $bp_field->type, self::FIELD_TYPES_TEXT, true ) ) {
+			return false;
+		}
+		if ( $this->is_xprofile_anyname_field_id( $data->field_id ) ) {
+			// This is a native WP user field, already translated under the 'Authors' domain.
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param \BP_XProfile_ProfileData $data
+	 */
+	public function register_user_profile_data( $data ) {
+		if ( ! $this->can_register_user_profile_data( $data ) ) {
+			return;
+		}
+		do_action(
+			'wpml_register_single_string',
+			$this->context,
+			sprintf( self::MEMBER_FIELD_VALUE_NAME_FORMAT, $data->user_id, $data->field_id ),
+			$data->value
+		);
 	}
 
 }

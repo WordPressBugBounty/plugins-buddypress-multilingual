@@ -1,9 +1,24 @@
 <wpml-config>
-    <custom-types>
-        <custom-type translate="1">bp-email</custom-type>
-    </custom-types>
-    <taxonomies>
-        <taxonomy translate="0">bp_member_type</taxonomy>
-        <taxonomy translate="0">bp-email-type</taxonomy>
-    </taxonomies>
+  <custom-types>
+    <custom-type translate="1">bp-email</custom-type>
+    <custom-type translate="0">bp_ps_form</custom-type>
+    <custom-type translate="0">bp-group-type</custom-type>
+    <custom-type translate="0">bp-member-type</custom-type>
+  </custom-types>
+  <taxonomies>
+    <taxonomy translate="0">bp_member_type</taxonomy>
+    <taxonomy translate="0">bp-email-type</taxonomy>
+    <taxonomy translate="0">bp_group_type</taxonomy>
+  </taxonomies>
+  <custom-fields>
+    <custom-field action="copy">_bbp_forum_id</custom-field>
+    <custom-field action="copy">_bbp_last_active_time</custom-field>
+    <custom-field action="copy">_bbp_activity_id</custom-field>
+    <custom-field action="copy">_bbp_author_ip</custom-field>
+    <custom-field action="copy">_bbp_reply_count</custom-field>
+    <custom-field action="copy">_bbp_reply_count_hidden</custom-field>
+    <custom-field action="copy">_bbp_topic_id</custom-field>
+    <custom-field action="copy">_bbp_voice_count</custom-field>
+    <custom-field action="copy">_bbp_reply_to</custom-field>
+  </custom-fields>
 </wpml-config>

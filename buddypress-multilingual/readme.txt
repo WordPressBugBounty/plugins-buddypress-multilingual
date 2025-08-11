@@ -3,8 +3,8 @@ Contributors: AmirHelzer, dgwatkins, strategio, jozik
 Donate link: http://wpml.org/documentation/related-projects/buddypress-multilingual/
 Tags: i18n, multilingual, WPML, BuddyPress, BuddyBoss
 Requires at least: 4.7
-Tested up to: 6.7
-Stable tag: 1.8.1
+Tested up to: 6.8.2
+Stable tag: 1.8.2
 Requires PHP: 7.2
 License: GPLv2
 

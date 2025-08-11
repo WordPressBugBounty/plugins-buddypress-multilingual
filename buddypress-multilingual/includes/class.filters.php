@@ -1,4 +1,7 @@
 <?php
+
+use WPML\FP\Obj;
+
 /**
  * Enables BP multilingual components on frontend using various filters.
  */
@@ -131,15 +134,59 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 			}
 
 			if ( ! empty( $page->ID ) ) {
+				$defaultLanguage = apply_filters( 'wpml_default_language', null );
+				$currentLanguage = apply_filters( 'wpml_current_language', null );
+				$bpPages         = bp_core_get_directory_pages();
+				$bpComponentPage = null;
+
+				$recreateLanguages     = false;
+				$recreateLanguagesArgs = [];
+
+				if ( empty( $languages ) ) {
+					/*
+					* If languages are empty (WPML failed in setting language switcher data)
+					* re-create language switcher data.
+					*
+					* Only case so far known is when WP_Query queried_object is messed up by BP.
+					* BP sets queried object to be BP content type, but it's fake WP_Post without ID.
+					*/
+					// @todo Add persistent message for admin to report and mark as deprecated
+					$recreateLanguages = true;
+				}
+
 				/*
-				* If languages are empty (WPML failed in setting language switcher data)
-				* re-create language switcher data.
+				* Component Pages do not need to be translated. If a translation is missing,
+				* BP will use the secondary language URL structure with the default language page slug:
 				*
-				* Only case so far known is when WP_Query queried_object is messed up by BP.
-				* BP sets queried object to be BP content type, but it's fake WP_Post without ID.
+				* For example:
+				* {http://localhost/es/news-feed}/}
+				* {http://localhost/es/members}/{keir/activity/}
+				*
+				* In those cases, $sitepress->get_ls_languages() will not include those seconary languages,
+				* unless we force them here. 
 				*/
-				// @todo Add persistent message for admin to report and mark as deprecated
-				if ( empty( $languages )
+				if ( (int) Obj::path( ['activity', 'id'], $bpPages ) === $page->ID ) {
+					$bpComponentPage = (int) $bpPages->activity->id;
+				}
+
+				if ( (int) Obj::path( ['members', 'id'], $bpPages ) === $page->ID ) {
+					$bpComponentPage = (int) $bpPages->members->id;
+				}
+
+				if ( (int) Obj::path( ['groups', 'id'], $bpPages ) === $page->ID ) {
+					$bpComponentPage = (int) $bpPages->groups->id;
+				}
+
+				if ( (int) Obj::path( ['forums', 'id'], $bpPages ) === $page->ID ) {
+					$bpComponentPage = (int) $bpPages->forums->id;
+				}
+
+				if ( $bpComponentPage ) {
+					$recreateLanguages     = true;
+					$recreateLanguagesArgs = [ 'skip_missing' => false ];
+				}
+
+				if ( $recreateLanguages
 						&& method_exists( $sitepress, 'set_wp_query' )
 						&& method_exists( $sitepress, 'get_ls_languages' ) ) {
 
@@ -151,7 +198,7 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 					$sitepress->set_wp_query();
 					remove_filter( 'icl_ls_languages', [ $this, 'icl_ls_languages_filter' ], 99 );
 					// Re-create language switcher data.
-					$languages = $sitepress->get_ls_languages();
+					$languages = $sitepress->get_ls_languages( $recreateLanguagesArgs );
 					add_filter( 'icl_ls_languages', [ $this, 'icl_ls_languages_filter' ], 99 );
 					// Restore $wp_query.
 					unset( $wp_query );
@@ -166,11 +213,10 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 				* {http://localhost/es/miembros}/{keir/profile/view/}
 				*/
 				if ( is_array( $languages ) && get_option( 'permalink_structure' ) !== '' ) {
-					$unfiltered_uri   = $bp->unfiltered_uri;
-					$offset           = intval( $bp->unfiltered_uri_offset ) + 1;
-					$append_array     = array_slice( $unfiltered_uri, $offset );
-					$append           = implode( '/', $append_array );
-					$current_language = apply_filters( 'wpml_current_language', null );
+					$unfiltered_uri = $bp->unfiltered_uri;
+					$offset         = intval( $bp->unfiltered_uri_offset ) + 1;
+					$append_array   = array_slice( $unfiltered_uri, $offset );
+					$append         = implode( '/', $append_array );
 
 					$add_get_parameters = [];
 					$parameters_to_copy = apply_filters(
@@ -194,7 +240,15 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 						if ( $translated_page_id ) {
 							do_action( 'wpml_switch_language', $code );
 							$page_permalink = untrailingslashit( get_permalink( $translated_page_id ) );
-							do_action( 'wpml_switch_language', $current_language );
+							do_action( 'wpml_switch_language', $currentLanguage );
+							$language['url'] = user_trailingslashit( "{$page_permalink}/{$append}" );
+						} else if ( $bpComponentPage ) {
+							// The current Component page is not translated to the relevant language:
+							// force convert the defaul language permalink into the language URL structure.
+							do_action( 'wpml_switch_language', $defaultLanguage );
+							$page_permalink = get_permalink( $bpComponentPage );
+							do_action( 'wpml_switch_language', $currentLanguage );
+							$page_permalink  = untrailingslashit( $sitepress->convert_url( $page_permalink, $code ) );
 							$language['url'] = user_trailingslashit( "{$page_permalink}/{$append}" );
 						}
 

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit91433cc71f5412d29a985910b48d0424
+class ComposerStaticInita7bb32383a1bf1171146440579f64e49
 {
     public static $classMap = array (
         'BPML_Compatibility' => __DIR__ . '/../..' . '/includes/class-bpml-compatibility.php',
@@ -12,6 +12,10 @@ class ComposerStaticInit91433cc71f5412d29a985910b48d0424
         'BPML_XProfile' => __DIR__ . '/../..' . '/includes/class.xprofile.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'WPML\\BuddyPress\\Activities' => __DIR__ . '/../..' . '/includes/class.activities.php',
+        'WPML\\BuddyPress\\ActivityTopics' => __DIR__ . '/../..' . '/includes/class.activityTopics.php',
+        'WPML\\BuddyPress\\Addons\\BPXprofileCustomFieldTypes' => __DIR__ . '/../..' . '/includes/addons/BPXprofileCustomFieldTypes.php',
+        'WPML\\BuddyPress\\Albums' => __DIR__ . '/../..' . '/includes/class.albums.php',
+        'WPML\\BuddyPress\\Documents' => __DIR__ . '/../..' . '/includes/class.documents.php',
         'WPML\\BuddyPress\\GroupTypes' => __DIR__ . '/../..' . '/includes/class.groupTypes.php',
         'WPML\\BuddyPress\\Groups' => __DIR__ . '/../..' . '/includes/class.groups.php',
         'WPML\\BuddyPress\\Members' => __DIR__ . '/../..' . '/includes/class.members.php',
@@ -25,7 +29,7 @@ class ComposerStaticInit91433cc71f5412d29a985910b48d0424
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInit91433cc71f5412d29a985910b48d0424::$classMap;
+            $loader->classMap = ComposerStaticInita7bb32383a1bf1171146440579f64e49::$classMap;
 
         }, null, ClassLoader::class);
     }

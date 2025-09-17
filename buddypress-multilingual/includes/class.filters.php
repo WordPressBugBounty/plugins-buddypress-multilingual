@@ -129,6 +129,7 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 					'post_type'      => 'page',
 					'posts_per_page' => 1,
 				];
+				/** @phpstan-ignore-next-line */
 				$posts    = get_posts( $args );
 				$page     = array_shift( $posts );
 			}

@@ -5,12 +5,12 @@
  * Description: BuddyPress Multilingual. <a href="http://wpml.org/?page_id=2890">Documentation</a>.
  * Author: OnTheGoSystems
  * Author URI: http://www.onthegosystems.com
- * Version: 1.8.2
+ * Version: 1.9.0
  *
  * @package bpml
  */
 
-define( 'BPML_VERSION', '1.8.2' );
+define( 'BPML_VERSION', '1.9.0' );
 define( 'BPML_RELPATH', plugins_url( '', __FILE__ ) );
 define( 'BPML_PATH', __DIR__ );
 
@@ -87,6 +87,13 @@ function bpml_init() {
 			$classes[] = WPML\BuddyPress\GroupTypes::class;
 			$classes[] = WPML\BuddyPress\Activities::class;
 			$classes[] = WPML\BuddyPress\ProfileTypes::class;
+			$classes[] = WPML\BuddyPress\ActivityTopics::class;
+			$classes[] = WPML\BuddyPress\Documents::class;
+			$classes[] = WPML\BuddyPress\Albums::class;
+
+			if ( class_exists( 'BP_Xprofile_CFTR' ) ) {
+				$classes[] = WPML\BuddyPress\Addons\BPXprofileCustomFieldTypes::class;
+			}
 
 			$loader = new WPML_Action_Filter_Loader();
 			$loader->load( $classes );

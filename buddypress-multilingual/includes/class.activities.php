@@ -144,6 +144,7 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 
 		if ( ! empty( $typesByTranslationMode['translated'] ) ) {
 			$multilingualConditions[] = $this->wpdb->prepare(
+				/** @phpstan-ignore-next-line */
 				'( a.type IN (' . wpml_prepare_in( $typesByTranslationMode['translated'] ) . ') AND bpml_translations.language_code = %s )',
 				$currentLanguage
 			);
@@ -152,11 +153,13 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		if ( ! empty( $typesByTranslationMode['asTranslated'] ) ) {
 			if ( $currentLanguage === $defaultLanguage ) {
 				$multilingualConditions[] = $this->wpdb->prepare(
+					/** @phpstan-ignore-next-line */
 					'( a.type IN (' . wpml_prepare_in( $typesByTranslationMode['asTranslated'] ) . ') AND bpml_translations.language_code = %s )',
 					$currentLanguage
 				);
 			} else {
 				$multilingualConditions[]  = $this->wpdb->prepare(
+					/** @phpstan-ignore-next-line */
 					"(
 						a.type IN (" . wpml_prepare_in( $typesByTranslationMode['asTranslated'] ) . ") 
 						AND (

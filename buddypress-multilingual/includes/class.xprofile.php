@@ -626,7 +626,7 @@ class BPML_XProfile implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 	public function scan_needed_warning() {
 		echo '<div class="updated error"><p>'
-		. esc_html__( 'Buddypress Multilingual: some profile fields are not registered for translation', 'bpml' )
+		. esc_html__( 'WPML Multilingual for BuddyPress and BuddyBoss: some profile fields are not registered for translation', 'bpml' )
 		. '&nbsp;<a class="button edit js-bpml-register-fields" href="javascript:void(0)" data-bpml="nonce='
 		. esc_html( wp_create_nonce( 'bpml-xprofile' ) )
 		. '&action=bpml_register_fields">'

@@ -1,16 +1,16 @@
 <?php
 /**
- * Plugin Name: BuddyPress Multilingual
+ * Plugin Name: WPML Multilingual for BuddyPress and BuddyBoss
  * Plugin URI: http://wpml.org/?page_id=2890
- * Description: BuddyPress Multilingual. <a href="http://wpml.org/?page_id=2890">Documentation</a>.
+ * Description: WPML Multilingual for BuddyPress and BuddyBoss | <a href="http://wpml.org/?page_id=2890">Documentation</a>.
  * Author: OnTheGoSystems
  * Author URI: http://www.onthegosystems.com
- * Version: 1.9.0
+ * Version: 1.9.1
  *
  * @package bpml
  */
 
-define( 'BPML_VERSION', '1.9.0' );
+define( 'BPML_VERSION', '1.9.1' );
 define( 'BPML_RELPATH', plugins_url( '', __FILE__ ) );
 define( 'BPML_PATH', __DIR__ );
 

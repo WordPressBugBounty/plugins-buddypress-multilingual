@@ -66,7 +66,7 @@ function bpml_admin_notice_required_plugins() {
 	$link_url = 'https://wpml.org/faq/how-to-add-string-translation-to-your-site/?utm_source=plugin&utm_medium=gui&utm_campaign=bpml';
 	$message  = sprintf(
 		/* translators: The placeholders are replaced by an HTML link pointing to the String translation add-on FAQ article. */
-		esc_html__( 'To use BuddyPress Multilingual, enable the WPML Multilingual CMS plugin and %1$sString Translation add-on%2$s alongside BuddyPress or BuddyBoss.', 'bpml' ),
+		esc_html__( 'To use WPML Multilingual for BuddyPress and BuddyBoss, enable the WPML Multilingual CMS plugin and %1$sString Translation add-on%2$s alongside BuddyPress or BuddyBoss.', 'bpml' ),
 		'<a href="' . esc_url( $link_url ) . '" class="wpml-external-link" target="_blank">',
 		'</a>'
 	);
@@ -75,7 +75,7 @@ function bpml_admin_notice_required_plugins() {
 
 function bpml_admin_notice_wpml_settings() {
 	echo '<div class="message updated"><p>'
-	. esc_html__( 'For BuddyPress Multilingual to work you must set "Different languages in directories" in WPML > Languages > Language URL Format', 'bpml' )
+	. esc_html__( 'For WPML Multilingual for BuddyPress and BuddyBoss to work you must set "Different languages in directories" in WPML > Languages > Language URL Format', 'bpml' )
 	. '</p></div>';
 }
 

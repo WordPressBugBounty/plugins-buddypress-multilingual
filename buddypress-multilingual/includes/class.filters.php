@@ -37,6 +37,9 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		// Add hooks related to the forum feature
 		$this->add_forum_hooks();
 
+		// Make bp_pages cache group non-persistent
+		add_action( 'init', [ $this, 'makeDirectoryPagesNonPersistent' ], 1 );
+
 	}
 
 	public function add_forum_hooks() {
@@ -164,7 +167,7 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 				* {http://localhost/es/members}/{keir/activity/}
 				*
 				* In those cases, $sitepress->get_ls_languages() will not include those seconary languages,
-				* unless we force them here. 
+				* unless we force them here.
 				*/
 				if ( (int) Obj::path( ['activity', 'id'], $bpPages ) === $page->ID ) {
 					$bpComponentPage = (int) $bpPages->activity->id;
@@ -351,6 +354,19 @@ class BPML_Filters implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		}
 
 		return $q;
+	}
+
+	/**
+	 * Make bp_pages cache group non-persistent.
+	 *
+	 * The wp:bp_pages:directory_pages cache causes issues in multilingual environments
+	 * because it uses a single cache key for all languages. By making the bp_pages
+	 * cache group non-persistent, the cache won't persist across requests, eliminating
+	 * multilingual cache conflicts entirely.
+	 */
+	public function makeDirectoryPagesNonPersistent() {
+		wp_cache_add_non_persistent_groups( 'bp_pages' );
+		wp_cache_delete( 'directory_pages', 'bp_pages' );
 	}
 
 }

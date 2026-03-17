@@ -4,7 +4,7 @@ Donate link: http://wpml.org/documentation/related-projects/buddypress-multiling
 Tags: i18n, multilingual, WPML, BuddyPress, BuddyBoss
 Requires at least: 4.7
 Tested up to: 6.9
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 Requires PHP: 7.2
 License: GPLv2
 

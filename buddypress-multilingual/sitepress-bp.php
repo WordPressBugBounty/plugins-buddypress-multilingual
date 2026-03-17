@@ -5,12 +5,12 @@
  * Description: WPML Multilingual for BuddyPress and BuddyBoss | <a href="http://wpml.org/?page_id=2890">Documentation</a>.
  * Author: OnTheGoSystems
  * Author URI: http://www.onthegosystems.com
- * Version: 1.9.1
+ * Version: 1.9.2
  *
  * @package bpml
  */
 
-define( 'BPML_VERSION', '1.9.1' );
+define( 'BPML_VERSION', '1.9.2' );
 define( 'BPML_RELPATH', plugins_url( '', __FILE__ ) );
 define( 'BPML_PATH', __DIR__ );
 

@@ -20,6 +20,9 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 		if ( bpml_is_buddyboss() ) {
 			add_action( 'wp_after_insert_post', [ $this, 'registerProfileTypeStrings' ], 10, 3 );
+			add_action( 'bb_member_type_after_save', [ $this, 'registerProfileTypeStringsById' ] );
+			add_action( 'added_post_meta', [ $this, 'registerProfileTypeStringsOnMetaUpdate' ], 10, 4 );
+			add_action( 'updated_post_meta', [ $this, 'registerProfileTypeStringsOnMetaUpdate' ], 10, 4 );
 			add_action( 'before_delete_post', [ $this, 'deleteProfileTypeStrings' ] );
 			add_filter( 'get_post_metadata', [ $this, 'translateProfileTypeMetaFields' ], 10, 4 );
 
@@ -183,6 +186,32 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$this->registerCustomFields( $postID, $package );
 
 		do_action( 'wpml_delete_unused_package_strings', $package );
+	}
+
+	/**
+	 * @param int $postID
+	 */
+	public function registerProfileTypeStringsById( $postID ) {
+		$post = get_post( $postID );
+		if ( ! $post ) {
+			return;
+		}
+
+		$this->registerProfileTypeStrings( $postID, $post, true );
+	}
+
+	/**
+	 * @param int    $metaID
+	 * @param int    $postID
+	 * @param string $metaKey
+	 * @param mixed  $metaValue
+	 */
+	public function registerProfileTypeStringsOnMetaUpdate( $metaID, $postID, $metaKey, $metaValue ) {
+		if ( ! array_key_exists( $metaKey, self::CUSTOM_FIELDS ) ) {
+			return;
+		}
+
+		$this->registerProfileTypeStringsById( $postID );
 	}
 
 

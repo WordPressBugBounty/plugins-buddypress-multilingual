@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita3c8435019d3b618ea84974aea3b905f
+class ComposerStaticInit72d06df706b04725838597cb8c2675a3
 {
     public static $classMap = array (
         'BPML_Compatibility' => __DIR__ . '/../..' . '/includes/class-bpml-compatibility.php',
@@ -29,7 +29,7 @@ class ComposerStaticInita3c8435019d3b618ea84974aea3b905f
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInita3c8435019d3b618ea84974aea3b905f::$classMap;
+            $loader->classMap = ComposerStaticInit72d06df706b04725838597cb8c2675a3::$classMap;
 
         }, null, ClassLoader::class);
     }

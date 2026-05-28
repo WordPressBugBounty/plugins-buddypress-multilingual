@@ -1,22 +1,22 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => '1.9.2',
-        'version' => '1.9.2.0',
+        'pretty_version' => '1.9.3',
+        'version' => '1.9.3.0',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => 'd2e679eb83879d6d82148c3e031063bc1d09ca93',
+        'reference' => '15f59636e1202c0038fb493113cc5e134cd39da0',
         'name' => 'otgs/buddypress-multilingual',
         'dev' => false,
     ),
     'versions' => array(
         'otgs/buddypress-multilingual' => array(
-            'pretty_version' => '1.9.2',
-            'version' => '1.9.2.0',
+            'pretty_version' => '1.9.3',
+            'version' => '1.9.3.0',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => 'd2e679eb83879d6d82148c3e031063bc1d09ca93',
+            'reference' => '15f59636e1202c0038fb493113cc5e134cd39da0',
             'dev_requirement' => false,
         ),
         'wpml-shared/wpml-lib-dependencies' => array(

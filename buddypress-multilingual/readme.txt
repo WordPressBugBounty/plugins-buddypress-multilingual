@@ -3,9 +3,9 @@ Contributors: AmirHelzer, dgwatkins, strategio, jozik
 Donate link: http://wpml.org/documentation/related-projects/buddypress-multilingual/
 Tags: i18n, multilingual, WPML, BuddyPress, BuddyBoss
 Requires at least: 4.7
-Tested up to: 6.9
-Stable tag: 1.9.2
-Requires PHP: 7.2
+Tested up to: 7.0
+Stable tag: 1.9.3
+Requires PHP: 7.4
 License: GPLv2
 
 **WPML Multilingual for BuddyPress and BuddyBoss** allows **BuddyPress** and **BuddyBoss** sites to run fully multilingual using the **WPML** plugin.

@@ -35,6 +35,8 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		
 		if ( $this->buddyBossFunctionsExists() ) {
 			add_action( 'wp_after_insert_post', [ $this, 'registerGroupTypeStrings' ], 10, 3 );
+			add_action( 'added_post_meta', [ $this, 'registerGroupTypeStringsOnMetaUpdate' ], 10, 4 );
+			add_action( 'updated_post_meta', [ $this, 'registerGroupTypeStringsOnMetaUpdate' ], 10, 4 );
 			add_filter( 'bp_group_organizer_label_text', [ $this, 'translateLabelTextFilter' ], 10, 3 );
 			add_filter( 'bp_group_moderator_label_text', [ $this, 'translateLabelTextFilter' ], 10, 3 );
 			add_filter( 'bp_group_member_label_text', [ $this, 'translateLabelTextFilter' ], 10, 3 );
@@ -75,6 +77,32 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$this->registerCustomFields( $postID, $package );
 
 		do_action( 'wpml_delete_unused_package_strings', $package );
+	}
+
+	/**
+	 * @param int $postID
+	 */
+	public function registerGroupTypeStringsById( $postID ) {
+		$post = get_post( $postID );
+		if ( ! $post ) {
+			return;
+		}
+
+		$this->registerGroupTypeStrings( $postID, $post, true );
+	}
+
+	/**
+	 * @param int    $metaID
+	 * @param int    $postID
+	 * @param string $metaKey
+	 * @param mixed  $metaValue
+	 */
+	public function registerGroupTypeStringsOnMetaUpdate( $metaID, $postID, $metaKey, $metaValue ) {
+		if ( ! array_key_exists( $metaKey, self::CUSTOM_FIELDS ) ) {
+			return;
+		}
+
+		$this->registerGroupTypeStringsById( $postID );
 	}
 
 	/**

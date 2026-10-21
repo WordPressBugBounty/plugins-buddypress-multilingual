@@ -35,11 +35,6 @@ class BPML_Compatibility implements \IWPML_Backend_Action, \IWPML_Frontend_Actio
 		return $page_id;
 	}
 
-	/**
-	 * Flush bp profile field cache when WordPress profiles are updated.
-	 *
-	 * @param int|null $user_id The user ID (optional).
-	 */
 	public function flush_profile_field_cache( $user_id = null ) {
 
 		if ( function_exists( 'wp_cache_flush_group' ) ) {

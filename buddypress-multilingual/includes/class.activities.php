@@ -6,7 +6,6 @@ use WPML\FP\Obj;
 
 class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPML_DIC_Action {
 
-	/** @var \wpdb */
 	private $wpdb;
 
 	const ACTIVITY_FEED_POST_TYPE_PREFIX           = 'new_blog_';
@@ -17,16 +16,11 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		$this->wpdb = $wpdb;
 	}
 
-	/**
-	 * @return bool
-	 */
 	private function maybeAddActivityQueryFilters() {
-		// TRUE on frontend.
 		if ( ! is_admin() ) {
 			return true;
 		}
 
-		// TRUE on frontend AJAX requests when asking for activities.
 		if (
 			defined( 'DOING_AJAX' ) && DOING_AJAX
 			&& 'activity_filter' === Obj::prop( 'action', $_POST )
@@ -45,30 +39,18 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		add_action( 'init', [ $this, 'forceTranslatedPostsActivities' ], 1 );
 	}
 
-	/**
-	 * @return string|null
-	 */
 	private function getCurrentLanguage() {
 		return apply_filters( 'wpml_current_language', null );
 	}
 
-	/**
-	 * @return string|null
-	 */
 	private function getDefaultLanguage() {
 		return apply_filters( 'wpml_default_language', null );
 	}
 
-	/**
-	 * @return string
-	 */
 	private function getPostTypeActivityType( $postType ) {
 		return self::ACTIVITY_FEED_POST_TYPE_PREFIX . $postType;
 	}
 
-	/**
-	 * @return array<string,array<int,string>>
-	 */
 	private function getTypesByTranslationMode( $postTypes ) {
 		$result = [
 			'translated'    => [],
@@ -89,16 +71,6 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		return $result;
 	}
 
-	/**
-	 * Adds a join to the table containing information about the language of a given element
-	 * Is required by @see getWhereConditions()
-	 *
-	 * @param string $joinSql JOIN clause.
-	 *
-	 * @return string
-	 *
-	 * @since BuddyPressML 1.8.0
-	 */
 	public function getJoinSql( $joinSql ) {
 		$currentLanguage = $this->getCurrentLanguage();
 		$defaultLanguage = $this->getDefaultLanguage();
@@ -107,7 +79,6 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 			return $joinSql;
 		}
 
-		//AND a.type LIKE '" . self::ACTIVITY_FEED_POST_TYPE_LIKE_PLACEHOLDER . "'
 		$joinSql .= "
 			LEFT JOIN {$this->wpdb->prefix}icl_translations bpml_translations
 			ON bpml_translations.element_id = a.secondary_item_id
@@ -118,16 +89,6 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		return $joinSql;
 	}
 
-	/**
-	 * Filters the visibility of activity items of a given type only in the selected language
-	 * Requires @see getJoinSql()
-	 *
-	 * @param array $whereConditions Current conditions for MySQL WHERE statement.
-	 *
-	 * @return array $whereConditions
-	 *
-	 * @since BuddyPressML 1.8.0
-	 */
 	public function getWhereConditions( $whereConditions ) {
 		$currentLanguage = $this->getCurrentLanguage();
 		$defaultLanguage = $this->getDefaultLanguage();
@@ -139,12 +100,10 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		$postTypes = get_post_types();
 
 		$typesByTranslationMode = $this->getTypesByTranslationMode( $postTypes );
-		// This covers not translated post types as well as other elements in the activity feed.
 		$multilingualConditions = [ 'bpml_translations.element_id IS NULL' ];
 
 		if ( ! empty( $typesByTranslationMode['translated'] ) ) {
 			$multilingualConditions[] = $this->wpdb->prepare(
-				/** @phpstan-ignore-next-line */
 				'( a.type IN (' . wpml_prepare_in( $typesByTranslationMode['translated'] ) . ') AND bpml_translations.language_code = %s )',
 				$currentLanguage
 			);
@@ -153,13 +112,11 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		if ( ! empty( $typesByTranslationMode['asTranslated'] ) ) {
 			if ( $currentLanguage === $defaultLanguage ) {
 				$multilingualConditions[] = $this->wpdb->prepare(
-					/** @phpstan-ignore-next-line */
 					'( a.type IN (' . wpml_prepare_in( $typesByTranslationMode['asTranslated'] ) . ') AND bpml_translations.language_code = %s )',
 					$currentLanguage
 				);
 			} else {
 				$multilingualConditions[]  = $this->wpdb->prepare(
-					/** @phpstan-ignore-next-line */
 					"(
 						a.type IN (" . wpml_prepare_in( $typesByTranslationMode['asTranslated'] ) . ") 
 						AND (
@@ -180,9 +137,6 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 					$defaultLanguage,
 					$currentLanguage
 				);
-				// The original WPML snippet includes another nested OR condition for when the translation is not published.
-				// See WPML_Display_As_Translated_Posts_Query:: get_query_for_translation_not_published()
-				// This is probably not required here, skipping for now.
 			}
 		}
 
@@ -192,11 +146,6 @@ class Activities implements \IWPML_Frontend_Action, \IWPML_Backend_Action, \IWPM
 		return $whereConditions;
 	}
 
-	/**
-	 * Revert the filter introduced in BuddyBoss 2.8.80 that skips translations as activities.
-	 *
-	 * @see ttps://onthegosystems.myjetbrains.com/youtrack/issue/compdev-841
-	 */
 	public function forceTranslatedPostsActivities() {
 		if ( ! class_exists( 'BB_WPML_Helpers' ) || ! method_exists( 'BB_WPML_Helpers', 'instance' ) ) {
 			return;

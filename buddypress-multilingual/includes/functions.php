@@ -1,46 +1,23 @@
 <?php
 
-/**
- * @return bool
- */
+function bpml_load_textdomain() {
+	load_plugin_textdomain( 'bpml', false, dirname( plugin_basename( BPML_FILE ) ) . '/languages' );
+}
+
 function bpml_is_buddyboss() {
 	return defined( 'BP_PLATFORM_VERSION' );
 }
 
-/**
- * Turns on verbose rewrite rules.
- *
- * @see http://wordpress.stackexchange.com/questions/22438/how-to-make-pages-slug-have-priority-over-any-other-taxonomies-like-custom-post
- * @see http://wordpress.stackexchange.com/questions/16902/permalink-rewrite-404-conflict-wordpress-taxonomies-cpt/16929#16929
- * @see http://wordpress.stackexchange.com/questions/17569/using-postname-for-a-custom-post-type
- * @see http://wordpress.stackexchange.com/a/16929/9244
- */
 function bpml_use_verbose_rules() {
 	global $wp_rewrite;
 	$wp_rewrite->use_verbose_page_rules = true;
 }
 
-/**
- * Modifies and collects rewrite rules for pages.
- *
- * @see bpml_rewrite_rules_array_filter
- * @see http://codex.wordpress.org/Plugin_API/Filter_Reference/page_rewrite_rules
- * @param string[] $page_rewrite_rules
- * @return array
- */
 function bpml_page_rewrite_rules_filter( $page_rewrite_rules ) {
 	$GLOBALS['bpml_page_rewrite_rules'] = $page_rewrite_rules;
 	return [];
 }
 
-/**
- * Re-orders rewrite rules by pre-pending collected rules.
- *
- * @see bpml_page_rewrite_rules_filter
- * @see http://codex.wordpress.org/Plugin_API/Filter_Reference/rewrite_rules_array
- * @param string[] $rewrite_rules
- * @return mixed
- */
 function bpml_rewrite_rules_array_filter( $rewrite_rules ) {
 	return $GLOBALS['bpml_page_rewrite_rules'] + $rewrite_rules;
 }
@@ -65,7 +42,7 @@ function bpml_is_langauge_as_param() {
 function bpml_admin_notice_required_plugins() {
 	$link_url = 'https://wpml.org/faq/how-to-add-string-translation-to-your-site/?utm_source=plugin&utm_medium=gui&utm_campaign=bpml';
 	$message  = sprintf(
-		/* translators: The placeholders are replaced by an HTML link pointing to the String translation add-on FAQ article. */
+		/* translators: Warning notice shown in the WordPress admin when a plugin this one needs is missing. %1$s: opening link tag, %2$s: closing link tag; the link opens WPML's documentation. Every product name stays in English. */
 		esc_html__( 'To use WPML Multilingual for BuddyPress and BuddyBoss, enable the WPML Multilingual CMS plugin and %1$sString Translation add-on%2$s alongside BuddyPress or BuddyBoss.', 'bpml' ),
 		'<a href="' . esc_url( $link_url ) . '" class="wpml-external-link" target="_blank">',
 		'</a>'
@@ -75,8 +52,18 @@ function bpml_admin_notice_required_plugins() {
 
 function bpml_admin_notice_wpml_settings() {
 	echo '<div class="message updated"><p>'
+	/* translators: Warning notice shown in the WordPress admin when the site's language URL format is not the one this plugin needs. "Different languages in directories" is an option, and "WPML > Languages > Language URL Format" a path through the WordPress admin: both should read as those screens are named in this language. */
 	. esc_html__( 'For WPML Multilingual for BuddyPress and BuddyBoss to work you must set "Different languages in directories" in WPML > Languages > Language URL Format', 'bpml' )
 	. '</p></div>';
+}
+
+function bpml_refresh_language_caches( $language ) {
+	if ( ! $language ) {
+		return;
+	}
+
+	do_action( 'wpml_switch_language', $language );
+	do_action( 'wpml_switch_language', null );
 }
 
 function bpml_sanitize_string_name( $string, $max_length = 30 ) {

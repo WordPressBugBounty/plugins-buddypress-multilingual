@@ -23,11 +23,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		add_filter( 'bp_xprofile_set_field_data_pre_validate', [ $this, 'onSave' ], 1, 3 );
 	}
 
-	/**
-	 * @param string $postType
-	 *
-	 * @return string
-	 */
 	private static function getPostTypeTranslationMode( $postType ) {
 		if ( apply_filters( 'wpml_is_display_as_translated_post_type', false, $postType ) ) {
 			return self::DISPLAY_AS_TRANSLATED;
@@ -38,11 +33,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return self::NOT_TRANSLATABLE;
 	}
 
-	/**
-	 * @param string $taxonomy
-	 *
-	 * @return string
-	 */
 	private static function getTaxonomyTranslationMode( $taxonomy ) {
 		global $sitepress;
 		if ( ! $sitepress ) {
@@ -58,13 +48,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return self::NOT_TRANSLATABLE;
 	}
 
-	/**
-	 * @param int[]  $selected
-	 * @param array  $args
-	 * @param string $postType
-	 *
-	 * @return int[]
-	 */
 	public function multiselectCustomPostTypeSelected( $selected, $args, $postType ) {
 		if ( empty( $selected ) ) {
 			return $selected;
@@ -86,12 +69,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return array_filter( $selected );
 	}
 
-	/**
-	 * @param int[] $postIds
-	 * @param int   $fieldId
-	 *
-	 * @return int[]
-	 */
 	public function multiselectCustomPostTypeValue( $postIds, $fieldId ) {
 		if ( empty( $postIds ) ) {
 			return $postIds;
@@ -126,13 +103,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return array_filter( $postIds );
 	}
 
-	/**
-	 * @param int    $selected
-	 * @param array  $args
-	 * @param string $postType
-	 *
-	 * @return int
-	 */
 	public function selectCustomPostTypeSelected( $selected, $args, $postType ) {
 		if ( empty( $selected ) ) {
 			return $selected;
@@ -148,12 +118,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return $selected ?? '';
 	}
 
-	/**
-	 * @param int $postId
-	 * @param int $fieldId
-	 *
-	 * @return int
-	 */
 	public function selectCustomPostTypeValue( $postId, $fieldId ) {
 		if ( empty( $postId ) ) {
 			return $postId;
@@ -174,13 +138,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return $postId ?? '';
 	}
 
-	/**
-	 * @param int[]  $selected
-	 * @param array  $args
-	 * @param string $taxonomy
-	 *
-	 * @return int[]
-	 */
 	public function multiselectCustomTaxonomySelected( $selected, $args, $taxonomy ) {
 		if ( empty( $selected ) ) {
 			return $selected;
@@ -206,13 +163,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return array_filter( $selected );
 	}
 
-	/**
-	 * @param int    $selected
-	 * @param array  $args
-	 * @param string $taxonomy
-	 *
-	 * @return int
-	 */
 	public function selectCustomTaxonomySelected( $selected, $args, $taxonomy ) {
 		if ( empty( $selected ) ) {
 			return $selected;
@@ -233,15 +183,6 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		return $selected ?? '';
 	}
 
-	/**
-	 * Save field values always in the default language, for consistency.
-	 *
-	 * @param mixed                   $value        Value passed to xprofile_set_field_data().
-	 * @param \BP_XProfile_Field      $field        Field object.
-	 * @param \BP_XProfile_Field_Type $fieldTypeObj Field type object.
-	 *
-	 * @return mixed
-	 */
 	public function onSave( $value, $field, $fieldTypeObj ) {
 		$relevantFieldTypes = [
 			'BPXProfileCFTR\Field_Types\Field_Type_Select_Post_Type',
@@ -256,13 +197,9 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		}
 
 		if (
-			/** @phpstan-ignore-next-line */
 			! $fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Select_Post_Type &&
-			/** @phpstan-ignore-next-line */
 			! $fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Multi_Select_Post_Type &&
-			/** @phpstan-ignore-next-line */
 			! $fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Select_Taxonomy &&
-			/** @phpstan-ignore-next-line */
 			! $fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Multi_Select_Taxonomy
 		) {
 			return $value;
@@ -282,9 +219,7 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		$fieldSelectedObject = null;
 		$translationMode     = self::NOT_TRANSLATABLE;
 		if (
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Select_Post_Type ||
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Multi_Select_Post_Type
 		) {
 			$fieldSelectedObject = bp_xprofile_get_meta( $fieldId, 'field', 'selected_post_type', true );
@@ -294,9 +229,7 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 			$translationMode = self::getPostTypeTranslationMode( $fieldSelectedObject );
 		}
 		if (
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Select_Taxonomy ||
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Multi_Select_Taxonomy
 		) {
 			$fieldSelectedObject = bp_xprofile_get_meta( $fieldId, 'field', 'selected_taxonomy', true );
@@ -314,9 +247,7 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		}
 
 		if (
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Select_Post_Type ||
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Select_Taxonomy
 		) {
 			$value = apply_filters( 'wpml_object_id', $value, $fieldSelectedObject, self::DISPLAY_AS_TRANSLATED === $translationMode, $defaultLanguage );
@@ -324,9 +255,7 @@ class BPXprofileCustomFieldTypes implements \IWPML_Frontend_Action, \IWPML_Backe
 		}
 
 		if (
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Multi_Select_Post_Type ||
-			/** @phpstan-ignore-next-line */
 			$fieldTypeObj instanceof \BPXProfileCFTR\Field_Types\Field_Type_Multi_Select_Taxonomy
 		) {
 			foreach ( $value as &$valueId ) {

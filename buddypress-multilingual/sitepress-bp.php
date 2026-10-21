@@ -1,20 +1,26 @@
 <?php
 /**
  * Plugin Name: WPML Multilingual for BuddyPress and BuddyBoss
- * Plugin URI: http://wpml.org/?page_id=2890
- * Description: WPML Multilingual for BuddyPress and BuddyBoss | <a href="http://wpml.org/?page_id=2890">Documentation</a>.
+ * Plugin URI: https://wpml.org/documentation/wpml-core-and-add-on-plugins/buddypress-multilingual/
+ * Description: WPML Multilingual for BuddyPress and BuddyBoss | <a href="https://wpml.org/documentation/wpml-core-and-add-on-plugins/buddypress-multilingual/">Documentation</a>.
  * Author: OnTheGoSystems
  * Author URI: http://www.onthegosystems.com
- * Version: 1.9.3
+ * Version: 5.0.0
+ * Plugin Slug: buddypress-multilingual
+ * Text Domain: bpml
+ * Domain Path: /languages
  *
  * @package bpml
  */
 
-define( 'BPML_VERSION', '1.9.3' );
+define( 'BPML_VERSION', '5.0.0' );
 define( 'BPML_RELPATH', plugins_url( '', __FILE__ ) );
 define( 'BPML_PATH', __DIR__ );
+define( 'BPML_FILE', __FILE__ );
 
 require_once BPML_PATH . '/includes/functions.php';
+
+add_action( 'init', 'bpml_load_textdomain' );
 
 if ( ! class_exists( 'WPML_Core_Version_Check' ) ) {
 	require_once BPML_PATH . '/vendor/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-core-version-check.php';
@@ -34,24 +40,12 @@ function bpml_init() {
 		if ( bpml_is_langauge_as_param() ) {
 			add_action( 'admin_notices', 'bpml_admin_notice_wpml_settings' );
 		} else {
-			// phpcs:disable WordPress.Security.NonceVerification
 			$apply_filters = false;
 
-			/*
-			 * Check if frontend BP AJAX request
-			 * BPML attaches ?lang=[code]&bpml_filter=true to admin ajax url using:
-			 * add_filter('bp_core_ajax_url', 'BPML_Filters::core_ajax_url_filter');
-			 */
 			if ( defined( 'DOING_AJAX' ) && DOING_AJAX && isset( $_GET['bpml_filter'] ) ) {
 				$apply_filters = true;
 			}
 
-			/*
-			 * Heartbeat WP API - BP latest activity AJAX status update
-			 * Displayed on activity page, AJAX updated list of activities.
-			 * Hooks 'heartbeat_received' and 'heartbeat_nopriv_received'
-			 * cannot be used because filters need to be applied earlier.
-			 */
 			if ( isset( $_POST['action'] ) && 'heartbeat' === $_POST['action']
 				&& isset( $_POST['screen_id'] ) && 'front' === $_POST['screen_id']
 				&& ! empty( $_POST['data']['bp_activity_last_recorded'] ) ) {
@@ -64,15 +58,12 @@ function bpml_init() {
 			) {
 				$apply_filters = true;
 			}
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 			$classes = [ WPML\BuddyPress\Upgrade::class ];
 
-			// Always on frontend.
 			if ( ! is_admin() || $apply_filters ) {
 				$classes[] = BPML_Filters::class;
 
-				// Verbose page rewrite rules.
 				if ( defined( 'BPML_USE_VERBOSE_PAGE_RULES' ) && BPML_USE_VERBOSE_PAGE_RULES ) {
 					add_action( 'init', 'bpml_use_verbose_rules' );
 					add_filter( 'page_rewrite_rules', 'bpml_page_rewrite_rules_filter' );
@@ -90,6 +81,7 @@ function bpml_init() {
 			$classes[] = WPML\BuddyPress\ActivityTopics::class;
 			$classes[] = WPML\BuddyPress\Documents::class;
 			$classes[] = WPML\BuddyPress\Albums::class;
+			$classes[] = WPML\BuddyPress\StringTranslationPolicy::class;
 
 			if ( class_exists( 'BP_Xprofile_CFTR' ) ) {
 				$classes[] = WPML\BuddyPress\Addons\BPXprofileCustomFieldTypes::class;

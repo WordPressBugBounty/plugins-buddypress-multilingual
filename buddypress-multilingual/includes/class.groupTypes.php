@@ -24,13 +24,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 	];
 
 	public function add_hooks() {
-		/*
-		* This feature works differently on BuddyBoss and BuddyPress, so we need to handle it differently in each case.
-		* - On BuddyPress, the strings are stored in the `bp_group_types` taxonomy.
-		* - On BuddyBoss, the strings are stored in the `bp-group-type` post type (which are linked to the taxonomy).
-		*
-		* Both uses the bp_groups_get_group_types filter. So we can keep it out of the if/else block.
-		*/
 		add_filter( 'bp_groups_get_group_types', [ $this, 'translateGroupTypesList' ], 10, 3 );
 		
 		if ( $this->buddyBossFunctionsExists() ) {
@@ -54,11 +47,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 	}
 
-	/**
-	 * @param int      $postID
-	 * @param \WP_Post $post
-	 * @param bool     $update
-	 */
 	public function registerGroupTypeStrings( $postID, $post, $update ) {
 		if ( self::GROUP_TYPE_POST_TYPE !== $post->post_type || wp_is_post_revision( $postID ) ) {
 			return;
@@ -79,9 +67,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		do_action( 'wpml_delete_unused_package_strings', $package );
 	}
 
-	/**
-	 * @param int $postID
-	 */
 	public function registerGroupTypeStringsById( $postID ) {
 		$post = get_post( $postID );
 		if ( ! $post ) {
@@ -91,12 +76,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$this->registerGroupTypeStrings( $postID, $post, true );
 	}
 
-	/**
-	 * @param int    $metaID
-	 * @param int    $postID
-	 * @param string $metaKey
-	 * @param mixed  $metaValue
-	 */
 	public function registerGroupTypeStringsOnMetaUpdate( $metaID, $postID, $metaKey, $metaValue ) {
 		if ( ! array_key_exists( $metaKey, self::CUSTOM_FIELDS ) ) {
 			return;
@@ -105,10 +84,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$this->registerGroupTypeStringsById( $postID );
 	}
 
-	/**
-	 * @param int   $postID
-	 * @param array $package
-	 */
 	protected function registerCustomFields( $postID, $package ) {
 		foreach ( self::CUSTOM_FIELDS as $metaKey => $name ) {
 			$metaValue = get_post_meta( $postID, $metaKey, true );
@@ -128,11 +103,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		}
 	}
 
-	/**
-	 * @param string $value
-	 * @param string $name
-	 * @param array  $package
-	 */
 	protected function registerString( $value, $name, $package ) {
 		do_action(
 			'wpml_register_string',
@@ -144,13 +114,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param string $text
-	 * @param string $name
-	 * @param array  $package
-	 *
-	 * @return string
-	 */
 	protected function translateString( $text, $name, $package ) {
 		return apply_filters(
 			'wpml_translate_string',
@@ -160,13 +123,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param array  $types
-	 * @param array  $args
-	 * @param string $operator
-	 *
-	 * @return array
-	 */
 	public function translateGroupTypesList( $types, $args, $operator ) {
 		if ( empty( $types ) ) {
 			return $types;
@@ -196,11 +152,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $types;
 	}
 
-	/**
-	 * @param string $groupType
-	 *
-	 * @return int
-	 */
 	protected function getGroupTypeId( $groupType ) {
 		if ( $this->buddyBossFunctionsExists() ) {
 			return bp_group_get_group_type_id( $groupType );
@@ -210,30 +161,15 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $term ? $term->term_id : 0;
 	}
 
-	/**
-	 * @return bool
-	 */
 	protected function buddyBossFunctionsExists() {
 		return function_exists( 'bp_groups_get_group_type' ) && function_exists( 'bp_group_get_group_type_id' );
 	}
 
-	/**
-	 * @param string $buttonText
-	 * @param int    $groupID
-	 * @param string $roleKey
-	 *
-	 * @return string
-	 */
 	public function translateLabelTextFilter( $buttonText, $groupID, $roleKey ) {
 		$stringName = $this->getStringNameByFilter( $roleKey );
 		return $this->translateGroupLabel( $buttonText, $groupID, $stringName );
 	}
 
-	/**
-	 * @param string $roleKey
-	 *
-	 * @return string
-	 */
 	protected function getStringNameByFilter( $roleKey ) {
 		$currentFilter = current_filter();
 
@@ -249,13 +185,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		}
 	}
 
-	/**
-	 * @param string $text
-	 * @param int    $groupID
-	 * @param string $name
-	 *
-	 * @return string
-	 */
 	public function translateGroupLabel( $text, $groupID, $name ) {
 
 		$groupType   = bp_groups_get_group_type( $groupID );
@@ -273,9 +202,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $this->translateString( $text, $name, $package );
 	}
 
-	/**
-	 * @param int $postID
-	 */
 	public function deleteGroupTypeStrings( $postID ) {
 		if ( get_post_type( $postID ) !== self::GROUP_TYPE_POST_TYPE ) {
 			return;
@@ -288,12 +214,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param int    $metaID
-	 * @param int    $termID
-	 * @param string $metaKey
-	 * @param mixed  $metaValue
-	 */
 	public function registerGroupTypeTermStrings( $metaID, $termID, $metaKey, $metaValue ) {
 		if ( ! in_array( $metaKey, [ 'bp_type_name', 'bp_type_singular_name' ], true ) ) {
 			return;
@@ -327,12 +247,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		do_action( 'wpml_delete_unused_package_strings', $package );
 	}
 
-	/**
-	 * @param int    $termID
-	 * @param int    $ttID
-	 * @param string $taxonomy
-	 * @param mixed  $deletedTerm
-	 */
 	public function deleteGroupTypeTermStrings( $termID, $ttID, $taxonomy, $deletedTerm ) {
 		if ( self::GROUP_TYPE_TAXONOMY !== $taxonomy ) {
 			return;
@@ -345,9 +259,6 @@ class GroupTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @return string
-	 */
 	protected function getGroupTypeKind() {
 		return $this->buddyBossFunctionsExists()
 		? self::BUDDYBOSS_GROUP_TYPE_KIND

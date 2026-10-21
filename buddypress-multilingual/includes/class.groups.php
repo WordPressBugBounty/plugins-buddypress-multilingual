@@ -28,14 +28,7 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		add_filter( 'bp_after_groups_edit_base_group_details_parse_args', [ $this, 'saveEditedGroupFields'] );
 	}
 
-	/**
-	 * @param \BP_Groups_Group|array $group
-	 */
 	public function registerStrings( $group ) {
-		// TODO Check when the current language is not the default one
-		// and if coming from the frontend.
-		// I assume that all backend-created groups go to default language,
-		// but frontend-created groups go to the current language!
 		$get = Obj::prop( Fns::__, $group );
 
 		$currentLanguage = null;
@@ -48,34 +41,30 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 				'wpml_register_single_string',
 				self::TEXTDOMAIN,
 				self::getName( $get( 'id' ), $field ),
-				wp_unslash( $get( $field ) ),
+				Sanitizer::groupField( $field, wp_unslash( $get( $field ) ) ),
 				true,
 				$currentLanguage
 			);
 		}
 	}
 
-	/**
-	 * @param string $field
-	 *
-	 * @return \Closure (string, BP_Groups_Group|array) -> string
-	 */
 	public function translate( $field ) {
 		return function( $value, $group ) use ( $field ) {
-			return apply_filters(
+			$translation = apply_filters(
 				'wpml_translate_single_string',
 				$value,
 				self::TEXTDOMAIN,
 				self::getName( Obj::prop( 'id', $group ), $field )
 			);
+
+			if ( $translation === $value ) {
+				return $value;
+			}
+
+			return Sanitizer::groupField( $field, $translation );
 		};
 	}
 
-	/**
-	 * @param \BP_Groups_Group $group
-	 *
-	 * @return \BP_Groups_Group
-	 */
 	public function translateStrings( $group ) {
 		foreach ( self::FIELDS as $field ) {
 			$getTranslation = $this->translate( $field );
@@ -84,11 +73,6 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $group;
 	}
 
-	/**
-	 * @param array{'groups': \BP_Groups_Group[]|int[], "total": int} $groups
-	 *
-	 * @return array{'groups': \BP_Groups_Group[]|int[], "total": int}
-	 */
 	public function translateGroups( $groups ) {
 		if ( ! isset( $groups['groups'] ) ) {
 			return $groups;
@@ -104,45 +88,30 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $groups;
 	}
 
-	/**
-	 * @param int    $id
-	 * @param string $field
-	 *
-	 * @return string
-	 */
 	public static function getName( $id, $field ) {
 		return sprintf( 'Group #%d %s', $id, $field );
 	}
 
-	/**
-	 * @param string $excerpt
-	 * @param object $group
-	 *
-	 * @return string
-	 */
 	public function translateExcerpt( $excerpt, $group ) {
 		$getTranslation = $this->translate( 'description' );
 
 		return bp_create_excerpt( $getTranslation( $excerpt, $group ), strlen( $excerpt ) );
 	}
 
-	/**
-	 * @param array $args
-	 *
-	 * @return array
-	 */
 	public function saveEditedGroupFields( $args ) {
 		if ( is_admin() ) {
-			// Only when editing a group in the frontend.
 			return $args;
 		}
-		if ( ! check_admin_referer( self::FRONTEND_EDIT_NONCE ) ) {
-			// Only when editing a group in the frontend.
+		if ( ! $this->hasFrontendEditNonce() ) {
 			return $args;
 		}
 
 		$groupId = Obj::prop( 'group_id', $args );
 		if ( ! $groupId ) {
+			return $args;
+		}
+
+		if ( ! $this->currentUserCanEditGroup( $groupId ) ) {
 			return $args;
 		}
 
@@ -158,6 +127,10 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		add_filter( 'groups_get_group', [ $this, 'translateStrings' ] );
 
 		foreach ( self::FIELDS as $field ) {
+			if ( ! is_string( Obj::prop( $field, $args ) ) ) {
+				continue;
+			}
+
 			$stringData = array(
 				'context' => self::TEXTDOMAIN,
 				'name'    => self::getName( $groupId, $field ),
@@ -171,16 +144,48 @@ class Groups implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 			$stringLanguage = apply_filters( 'wpml_get_string_language', null, self::TEXTDOMAIN, self::getName( $groupId, $field ) );
 			if ( $stringLanguage !== $currentLanguage ) {
-				// The 'wpml_add_string_translation' action is only registered in the backend.
-				$translatedStringId = icl_add_string_translation( $stringId, $currentLanguage, $args[ $field ], ICL_TM_COMPLETE );
+				$translation = Sanitizer::groupField( $field, wp_unslash( $args[ $field ] ) );
+				StringTranslationWrite::objectTranslation(
+					$stringId,
+					$currentLanguage,
+					$translation,
+					'bp-group:' . $groupId,
+					'frontend-group-admin'
+				);
 				$args[ $field ]  = $originalGroup->$field;
 			}
 		}
 
-		// Refresh cache and textdomain files.
 		do_action( 'wpml_switch_language', $currentLanguage );
 
 		return $args;
+	}
+
+	private function hasFrontendEditNonce() {
+		$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
+
+		return (bool) wp_verify_nonce( $nonce, self::FRONTEND_EDIT_NONCE );
+	}
+
+	public static function currentUserCanManageById( $groupId ) {
+		return ( new self() )->currentUserCanEditGroup( (int) $groupId );
+	}
+
+	private function currentUserCanEditGroup( $groupId ) {
+		$userId = get_current_user_id();
+		if ( ! $userId ) {
+			return false;
+		}
+
+		if ( function_exists( 'groups_is_user_admin' ) && groups_is_user_admin( $userId, $groupId ) ) {
+			return true;
+		}
+
+		if ( function_exists( 'bp_current_user_can' ) && bp_current_user_can( 'bp_moderate' ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 }

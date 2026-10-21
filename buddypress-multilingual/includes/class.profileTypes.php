@@ -33,13 +33,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		}
 	}
 
-	/**
-	 * @param array  $types
-	 * @param array  $args
-	 * @param string $operator
-	 *
-	 * @return array
-	 */
 	public function translateProfileTypesList( $types, $args, $operator ) {
 		if ( empty( $types ) ) {
 			return $types;
@@ -77,14 +70,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $types;
 	}
 
-	/**
-	 * @param mixed  $value
-	 * @param int    $postID
-	 * @param string $metaKey
-	 * @param bool   $single
-	 *
-	 * @return mixed
-	 */
 	public function translateProfileTypeMetaFields( $value, $postID, $metaKey, $single ) {
 		if ( is_admin() || ! array_key_exists( $metaKey, self::CUSTOM_FIELDS ) || get_post_type( $postID ) !== self::PROFILE_TYPE_POST_TYPE ) {
 			return $value;
@@ -111,13 +96,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		return $value;
 	}
 
-	/**
-	 * @param string $text
-	 * @param string $name
-	 * @param array  $package
-	 *
-	 * @return string
-	 */
 	protected function translateString( $text, $name, $package ) {
 		return apply_filters(
 			'wpml_translate_string',
@@ -127,12 +105,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param int    $metaID
-	 * @param int    $termID
-	 * @param string $metaKey
-	 * @param mixed  $metaValue
-	 */
 	public function registerProfileTypeTermStrings( $metaID, $termID, $metaKey, $metaValue ) {
 		if ( ! in_array( $metaKey, array_keys( self::TERM_FIELDS ), true ) ) {
 			return;
@@ -163,11 +135,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		do_action( 'wpml_delete_unused_package_strings', $package );
 	}
 
-	/**
-	 * @param int      $postID
-	 * @param \WP_Post $post
-	 * @param bool     $update
-	 */
 	public function registerProfileTypeStrings( $postID, $post, $update ) {
 		if ( self::PROFILE_TYPE_POST_TYPE !== $post->post_type || wp_is_post_revision( $postID ) ) {
 			return;
@@ -188,9 +155,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		do_action( 'wpml_delete_unused_package_strings', $package );
 	}
 
-	/**
-	 * @param int $postID
-	 */
 	public function registerProfileTypeStringsById( $postID ) {
 		$post = get_post( $postID );
 		if ( ! $post ) {
@@ -200,12 +164,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$this->registerProfileTypeStrings( $postID, $post, true );
 	}
 
-	/**
-	 * @param int    $metaID
-	 * @param int    $postID
-	 * @param string $metaKey
-	 * @param mixed  $metaValue
-	 */
 	public function registerProfileTypeStringsOnMetaUpdate( $metaID, $postID, $metaKey, $metaValue ) {
 		if ( ! array_key_exists( $metaKey, self::CUSTOM_FIELDS ) ) {
 			return;
@@ -215,10 +173,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 	}
 
 
-	/**
-	 * @param int   $postID
-	 * @param array $package
-	 */
 	protected function registerCustomFields( $postID, $package ) {
 		foreach ( self::CUSTOM_FIELDS as $metaKey => $name ) {
 			$metaValue = get_post_meta( $postID, $metaKey, true );
@@ -230,11 +184,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		}
 	}
 
-	/**
-	 * @param string $value
-	 * @param string $name
-	 * @param array  $package
-	 */
 	protected function registerString( $value, $name, $package ) {
 		do_action(
 			'wpml_register_string',
@@ -246,12 +195,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param int    $termID
-	 * @param int    $ttID
-	 * @param string $taxonomy
-	 * @param mixed  $deletedTerm
-	 */
 	public function deleteProfileTypeTermStrings( $termID, $ttID, $taxonomy, $deletedTerm ) {
 		if ( self::PROFILE_TYPE_TAXONOMY !== $taxonomy ) {
 			return;
@@ -264,9 +207,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param int $postID
-	 */
 	public function deleteProfileTypeStrings( $postID ) {
 		if ( get_post_type( $postID ) !== self::PROFILE_TYPE_POST_TYPE ) {
 			return;
@@ -279,11 +219,6 @@ class ProfileTypes implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		);
 	}
 
-	/**
-	 * @param string $memberType
-	 *
-	 * @return int
-	 */
 	protected function getProfileTypeId( $memberType ) {
 		if ( bpml_is_buddyboss() ) {
 			$args = [

@@ -12,10 +12,8 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 	private $replacedTitlesOnSave = [];
 
 	public function add_hooks() {
-		// Register strings and translations on frontend creation/edition.
 		add_action( 'bp_document_folder_before_save', [ $this, 'beforeSave' ], 1 );
 		add_action( 'bp_document_folder_after_save', [ $this, 'afterSave' ], 1 );
-		// Apply translations.
 		add_filter( 'bp_get_folder_title', [ $this, 'translateFolderTitle' ], 1, 2 );
 		add_filter( 'bp_get_folder_folder_title', [ $this, 'translateFolderTitle' ], 1, 2 );
 		add_filter( 'bp_populate_folder_title', [ $this, 'translateFolderTitle' ], 1, 2 );
@@ -23,19 +21,10 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		add_filter( 'bp_document_folder_prefetch_object_data', [ $this, 'translateFoldersData' ] );
 	}
 
-	/**
-	 * @param int|string $folderId
-	 * @param string     $field
-	 *
-	 * @return string
-	 */
 	public static function getName( $folderId, $field ) {
 		return sprintf( 'Document folder #%d %s', $folderId, $field );
 	}
 
-	/**
-	 * @param \BP_Document_Folder $folder Passed by reference.
-	 */
 	public function beforeSave( $folder ) {
 		$folderId = Obj::prop( 'id', $folder );
 		if ( empty ( $folderId ) ) {
@@ -52,7 +41,6 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 
 		$stringId = apply_filters( 'wpml_string_id', null, $stringData );
 		if ( ! $stringId ) {
-			// Register string in current language.
 			return;
 		}
 
@@ -60,21 +48,17 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$stringLanguage  = apply_filters( 'wpml_get_string_language', null, self::TEXTDOMAIN, $stringName );
 
 		if ( $stringLanguage === $currentLanguage ) {
-			// Register the struing as it might have changed.
 			$this->registerTitle( $folderId, $title, $currentLanguage );
 		} else {
-			// Register the translationm for the string as it might have changed.
-			$this->registerTitleTranslation( $stringId, $title, $currentLanguage );
-			// Replace the folder title with the original one so it is not overriden with the translation.
+			if ( $this->canManageFolder( $folder ) ) {
+				$this->registerTitleTranslation( $stringId, Sanitizer::plainText( wp_unslash( $title ) ), $currentLanguage, $folderId );
+			}
 			$this->replaceTitleWithOriginal( $folder, $folderId, $title );
 		}
 
 		$this->processedOnSave[] = $folderId;
 	}
 
-	/**
-	 * @param \BP_Document_Folder $folder Passed by reference.
-	 */
 	public function afterSave( $folder ) {
 		$folderId = Obj::prop( 'id', $folder );
 		if ( empty ( $folderId ) ) {
@@ -84,22 +68,14 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$title           = Obj::prop( 'title', $folder );
 		$currentLanguage = apply_filters( 'wpml_current_language', null );
 
-		// If the folder ID was not processed by beforeSaveFolder, it means that it is a new folder: register its title.
 		$this->registerTitle( $folderId, $title, $currentLanguage );
-		// Check if the folder title was replaced with the original one, and restore it to the current value.
 		$this->restoreTitle( $folder, $folderId );
 
-		// Refresh cache and textdomain files.
-		do_action( 'wpml_switch_language', $currentLanguage );
+		bpml_refresh_language_caches( $currentLanguage );
 
 		$this->processedOnSave[] = $folderId;
 	}
 
-	/**
-	 * @param int|string $folderId
-	 * @param string     $title
-	 * @param string     $stringLanguage
-	 */
 	private function registerTitle( $folderId, $title, $stringLanguage ) {
 		if ( in_array( $folderId, $this->processedOnSave ) ) {
 			return;
@@ -109,26 +85,61 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 			'wpml_register_single_string',
 			self::TEXTDOMAIN,
 			self::getName( $folderId, 'title' ),
-			wp_unslash( $title ),
+			Sanitizer::plainText( wp_unslash( $title ) ),
 			true,
 			$stringLanguage
 		);
 	}
 
-	/**
-	 * @param int    $stringId
-	 * @param string $title
-	 * @param string $stringLanguage
-	 */
-	private function registerTitleTranslation( $stringId, $title, $stringLanguage ) {
-		icl_add_string_translation( $stringId, $stringLanguage, $title, ICL_TM_COMPLETE );
+	public static function currentUserCanManageById( $folderId ) {
+		if ( ! get_current_user_id() ) {
+			return false;
+		}
+
+		if ( ! class_exists( '\BP_Document_Folder' ) ) {
+			return false;
+		}
+
+		$folder = new \BP_Document_Folder( (int) $folderId );
+		if ( empty( Obj::prop( 'id', $folder ) ) ) {
+			return false;
+		}
+
+		return ( new self() )->canManageFolder( $folder );
 	}
 
-	/**
-	 * @param \BP_Document_Folder $folder Passed by reference.
-	 * @param int|string          $folderId
-	 * @param string              $title
-	 */
+	private function canManageFolder( $folder ) {
+		$userId = get_current_user_id();
+		if ( ! $userId ) {
+			return false;
+		}
+
+		if ( function_exists( 'bp_folder_user_can_edit' ) ) {
+			return (bool) bp_folder_user_can_edit( $folder );
+		}
+
+		if ( function_exists( 'bp_current_user_can' ) && bp_current_user_can( 'bp_moderate' ) ) {
+			return true;
+		}
+
+		$groupId = (int) Obj::prop( 'group_id', $folder );
+		if ( $groupId ) {
+			return function_exists( 'groups_can_user_manage_document' ) && groups_can_user_manage_document( $userId, $groupId );
+		}
+
+		return (int) Obj::prop( 'user_id', $folder ) === $userId;
+	}
+
+	private function registerTitleTranslation( $stringId, $title, $stringLanguage, $folderId ) {
+		StringTranslationWrite::objectTranslation(
+			$stringId,
+			$stringLanguage,
+			$title,
+			'bp-document-folder:' . $folderId,
+			'frontend-folder-owner'
+		);
+	}
+
 	private function replaceTitleWithOriginal( &$folder, $folderId, $title ) {
 		global $wpdb;
 		$tableName     = $this->getDocumentFoldersTable();
@@ -146,79 +157,51 @@ class Documents implements \IWPML_Backend_Action, \IWPML_Frontend_Action {
 		$folder->title                           = $originalTitle;
 	}
 
-	/**
-	 * @return string
-	 */
 	private function getDocumentFoldersTable() {
 		$bp = buddypress();
-		/** @phpstan-ignore-next-line */
 		return $bp->document->table_name_folder;
 	}
 
-	/**
-	 * @param \BP_Document_Folder $folder Passed by reference.
-	 * @param int|string          $folderId
-	 */
 	private function restoreTitle( &$folder, $folderId ) {
 		if ( isset( $this->replacedTitlesOnSave[ $folderId ] ) ) {
 			$folder->title = $this->replacedTitlesOnSave[ $folderId ];
 		}
 	}
 
-	/**
-	 * @param string     $title
-	 * @param int|string $folderId
-	 *
-	 * @return string
-	 */
 	public function translateFolderTitle( $title, $folderId = null ) {
 		if ( ! $folderId ) {
 			return $title;
 		}
 
-		return apply_filters(
+		$translation = apply_filters(
 			'wpml_translate_single_string',
 			$title ,
 			self::TEXTDOMAIN,
 			self::getName( $folderId, 'title' )
 		);
+
+		if ( $translation === $title ) {
+			return $title;
+		}
+
+		return Sanitizer::plainText( $translation );
 	}
 
-	/**
-	 * @param array $element
-	 *
-	 * @return array
-	 */
 	public function translateFolderBreadcrumb( $element ) {
 		if ( ! isset( $element['id'] ) || ! isset( $element['title'] ) ) {
 			return $element;
 		}
 
-		$element['title'] = apply_filters(
-			'wpml_translate_single_string',
-			$element['title'] ,
-			self::TEXTDOMAIN,
-			self::getName( $element['id'], 'title' )
-		);
+		$element['title'] = $this->translateFolderTitle( $element['title'], $element['id'] );
 		return $element;
 	}
 
-	/**
-	 * @param array<int,object|int> $folders
-	 *
-	 * @return array<int,object|int>
-	 */
 	public function translateFoldersData( $folders ) {
 		foreach ( $folders as &$folder ) {
 			if ( ! isset( $folder->id ) || ! isset( $folder->title ) ) {
 				continue;
 			}
-			$folder->title = apply_filters(
-				'wpml_translate_single_string',
-				$folder->title ,
-				self::TEXTDOMAIN,
-				self::getName( $folder->id, 'title' )
-			);
+			$folder->title = $this->translateFolderTitle( $folder->title, $folder->id );
 		}
 
 		return $folders;
